@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NaturalTTS - Utility-First Text to Speech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            terminal: {
+              black: '#282a36',
+              darker: '#1e1f29',
+              dark: '#21222c',
+              light: '#343746',
+              green: '#50fa7b',
+              amber: '#ffb86c',
+              purple: '#bd93f9',
+              red: '#ff5555',
+              cyan: '#8be9fd',
+              gray: '#6272a4',
+              lightGray: '#f8f8f2'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .terminal-window {
+      box-shadow: 0 0 0 1px rgba(80, 250, 123, 0.1);
+      background-color: rgba(40, 42, 54, 0.97);
+    }
+    
+    .terminal-title-bar {
+      background-color: #343746;
+      padding: 8px 16px;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .window-button {
+      height: 12px;
+      width: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      display: inline-block;
+    }
+    
+    /* Custom scrollbar for terminal feel */
+    .terminal-scrollbar::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .terminal-scrollbar::-webkit-scrollbar-track {
+      background: #282a36;
+    }
+    
+    .terminal-scrollbar::-webkit-scrollbar-thumb {
+      background: #6272a4;
+      border-radius: 4px;
+    }
+    
+    .terminal-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #bd93f9;
+    }
+    
+    .console-line {
+      display: block;
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+    
+    .console-prompt::before {
+      content: '> ';
+      color: #50fa7b;
+    }
+    
+    .noise-bg {
+      position: relative;
+    }
+    
+    .noise-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body class="bg-terminal-darker text-terminal-lightGray">
+  <!-- Status Bar - Added for technical credibility -->
+  <div class="bg-terminal-black border-b border-terminal-light py-1 px-4 text-xs font-mono flex justify-between items-center">
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center">
+        <span class="h-2 w-2 bg-terminal-green rounded-full mr-2"></span>
+        <span>System Online</span>
+      </div>
+      <div class="hidden sm:block">
+        <span>Version: 1.2.3</span>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <div class="hidden md:block">
+        <span>Latency: 12ms</span>
+      </div>
+      <div>
+        <span id="current-time">00:00:00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-terminal-black border-b border-terminal-light shadow-md">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="flex justify-between items-center py-3">
+        <a href="#" class="text-terminal-green font-mono font-bold text-xl flex items-center">
+          <span class="mr-2">🔊</span>NaturalTTS
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:block">
+          <ul class="flex items-center space-x-6">
+            <li><a href="#" class="font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300">Home</a></li>
+            <li><a href="#features" class="font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300">Features</a></li>
+            <li><a href="#languages" class="font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300">Voices</a></li>
+            <li><a href="#faq" class="font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300">FAQ</a></li>
+          </ul>
+        </nav>
+
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-button" class="md:hidden text-terminal-lightGray focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div id="mobile-menu" class="hidden md:hidden w-full bg-terminal-black border-t border-terminal-light">
+      <div class="container mx-auto px-4 py-3">
+        <nav>
+          <ul class="flex flex-col space-y-3">
+            <li><a href="#" class="block font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300 py-2">Home</a></li>
+            <li><a href="#features" class="block font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300 py-2">Features</a></li>
+            <li><a href="#languages" class="block font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300 py-2">Voices</a></li>
+            <li><a href="#faq" class="block font-medium text-terminal-lightGray hover:text-terminal-green transition duration-300 py-2">FAQ</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="py-16 text-center">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="inline-block mb-6 px-4 py-1 bg-terminal-light rounded-full text-xs font-mono text-terminal-green">
+        v1.2.3 • browser-based • client-side processing
+      </div>
+      <h1 class="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+        Transform <span class="text-terminal-green">Text to Speech</span> <br class="hidden sm:block">Without Leaving Your Browser
+      </h1>
+      <p class="text-base text-terminal-gray max-w-2xl mx-auto mb-10 leading-relaxed">
+        A powerful, privacy-focused TTS converter with natural-sounding voices.
+        No login required, runs entirely in your browser.
+      </p>
+
+      <!-- Converter Section - Terminal Inspired -->
+      <div class="terminal-window rounded-lg mb-12 max-w-4xl mx-auto transform transition hover:shadow-lg duration-300 overflow-hidden noise-bg">
+        <div class="terminal-title-bar">
+          <div class="window-button" style="background-color: #ff5f56;"></div>
+          <div class="window-button" style="background-color: #ffbd2e;"></div>
+          <div class="window-button" style="background-color: #27c93f;"></div>
+          <div class="ml-2 text-xs font-mono">naturaltts@localhost:~</div>
+        </div>
+
+        <div class="p-6">
+          <!-- Console header text -->
+          <div class="font-mono text-terminal-green text-sm mb-4 console-line">
+            NaturalTTS Engine loaded. Ready to convert text to speech.
+          </div>
+          <div class="font-mono text-terminal-amber text-sm mb-6 console-line">
+            Type or paste your text below (5000 char max).
+          </div>
+
+          <div class="mb-6">
+            <div class="relative font-mono mb-6">
+              <textarea id="text-input" placeholder="Enter your text here..." 
+                class="w-full min-h-[150px] p-4 bg-terminal-dark border border-terminal-light rounded-md text-terminal-lightGray text-sm resize-y focus:ring-1 focus:ring-terminal-green focus:border-terminal-green outline-none transition terminal-scrollbar"></textarea>
+              <span class="absolute bottom-3 right-3 text-xs text-terminal-gray">
+                <span id="char-count">0</span>/5000
+              </span>
+              <button id="clear-btn" class="absolute top-3 right-3 text-terminal-gray hover:text-terminal-lightGray border-none bg-transparent cursor-pointer transition" aria-label="Clear text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div class="flex flex-col">
+                <label for="voice" class="font-mono text-xs mb-2 text-terminal-amber">Voice:</label>
+                <select id="voice" class="p-2 bg-terminal-dark border border-terminal-light rounded-md focus:ring-1 focus:ring-terminal-green focus:border-terminal-green outline-none text-sm font-mono text-terminal-lightGray terminal-scrollbar">
+                  <option value="en_US_female">English (US) - Female</option>
+                  <option value="en_US_male">English (US) - Male</option>
+                  <option value="en_UK_female">English (UK) - Female</option>
+                  <option value="en_UK_male">English (UK) - Male</option>
+                  <option value="es_female">Spanish - Female</option>
+                  <option value="fr_female">French - Female</option>
+                  <option value="de_female">German - Female</option>
+                  <option value="it_female">Italian - Female</option>
+                  <option value="ja_female">Japanese - Female</option>
+                </select>
+              </div>
+
+              <div class="flex flex-col">
+                <label for="speed" class="font-mono text-xs mb-2 text-terminal-amber">Speed:</label>
+                <select id="speed" class="p-2 bg-terminal-dark border border-terminal-light rounded-md focus:ring-1 focus:ring-terminal-green focus:border-terminal-green outline-none text-sm font-mono text-terminal-lightGray terminal-scrollbar">
+                  <option value="0.8">0.8x (Slow)</option>
+                  <option value="1.0" selected>1.0x (Normal)</option>
+                  <option value="1.2">1.2x (Fast)</option>
+                  <option value="1.5">1.5x (Very Fast)</option>
+                </select>
+              </div>
+
+              <div class="flex flex-col">
+                <label for="filename" class="font-mono text-xs mb-2 text-terminal-amber">File Name:</label>
+                <input type="text" id="filename" value="speech" class="p-2 bg-terminal-dark border border-terminal-light rounded-md focus:ring-1 focus:ring-terminal-green focus:border-terminal-green outline-none text-sm font-mono text-terminal-lightGray terminal-scrollbar">
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+              <button id="generate-btn" class="flex-1 py-3 bg-terminal-green text-terminal-black rounded-md font-medium text-sm hover:bg-opacity-90 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 duration-300 focus:outline-none focus:ring-2 focus:ring-terminal-green focus:ring-opacity-50">
+                > Generate Speech
+              </button>
+
+              <button id="sample-btn" class="flex-1 py-3 bg-terminal-dark text-terminal-lightGray border border-terminal-light rounded-md font-medium text-sm hover:bg-terminal-light transition shadow-md hover:shadow-lg duration-300 focus:outline-none focus:ring-2 focus:ring-terminal-light focus:ring-opacity-50">
+                > Try Sample
+              </button>
+            </div>
+
+            <!-- System stats - Adding this for technical credibility -->
+            <div class="mt-6 py-2 px-2 border-t border-terminal-light">
+              <div class="grid grid-cols-3 gap-2 text-xs font-mono text-terminal-gray">
+                <div>Model: Piper v2.0</div>
+                <div>Buffer: 32MB</div>
+                <div>Workers: 4</div>
+              </div>
+            </div>
+
+          </div>
+
+          <div id="player-container" class="hidden mt-6 p-4 bg-terminal-dark rounded-md border border-terminal-light">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-mono text-terminal-green text-sm">Output.mp3</h3>
+              <span class="text-xs font-mono text-terminal-gray" id="audio-duration">00:00.00</span>
+            </div>
+            
+            <audio controls id="audio-player" class="w-full mb-4 h-10"></audio>
+            
+            <div class="flex justify-between items-center">
+              <div class="text-xs font-mono text-terminal-amber">
+                Sample rate: 24kHz | Bit rate: 128kbps
+              </div>
+              <a href="#" id="download-btn" class="inline-flex items-center justify-center py-2 px-4 bg-terminal-amber text-terminal-black rounded-md font-mono text-sm hover:bg-opacity-90 transition shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-terminal-amber focus:ring-opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="flex flex-wrap justify-center gap-6 my-8">
+        <div class="flex items-center text-terminal-gray bg-terminal-black px-3 py-1.5 rounded-md border border-terminal-light">
+          <span class="h-2 w-2 bg-terminal-green rounded-full mr-2"></span>
+          <span class="text-sm">Local Processing</span>
+        </div>
+        <div class="flex items-center text-terminal-gray bg-terminal-black px-3 py-1.5 rounded-md border border-terminal-light">
+          <span class="h-2 w-2 bg-terminal-amber rounded-full mr-2"></span>
+          <span class="text-sm">Natural Intonation</span>
+        </div>
+        <div class="flex items-center text-terminal-gray bg-terminal-black px-3 py-1.5 rounded-md border border-terminal-light">
+          <span class="h-2 w-2 bg-terminal-purple rounded-full mr-2"></span>
+          <span class="text-sm">50ms Latency</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-16 bg-terminal-dark border-y border-terminal-light">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="text-center mb-12">
+        <div class="inline-block mb-3 px-3 py-1 bg-terminal-light rounded-md text-xs font-mono text-terminal-green">
+          Core Capabilities
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold mb-3">Why Choose NaturalTTS?</h2>
+        <p class="text-terminal-gray text-base max-w-2xl mx-auto">A lightweight text-to-speech converter with technical edge and privacy-first design</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-6 transition duration-300 hover:border-terminal-green">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 flex items-center justify-center rounded-md bg-terminal-dark text-terminal-green mr-3">
+              🔒
+            </div>
+            <h3 class="text-lg font-semibold">100% Private</h3>
+          </div>
+          <p class="text-terminal-gray text-sm leading-relaxed">Your text never leaves your device. All processing happens locally using WebAssembly, ensuring complete data privacy.</p>
+          <div class="mt-4 border-t border-terminal-light pt-4">
+            <div class="flex items-center text-xs text-terminal-amber font-mono">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              No data transmission to servers
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-6 transition duration-300 hover:border-terminal-green">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 flex items-center justify-center rounded-md bg-terminal-dark text-terminal-green mr-3">
+              🌍
+            </div>
+            <h3 class="text-lg font-semibold">12 Languages</h3>
+          </div>
+          <p class="text-terminal-gray text-sm leading-relaxed">Support for multiple languages with high-quality voices. Choose between various voice types and accents for global content.</p>
+          <div class="mt-4 border-t border-terminal-light pt-4">
+            <div class="flex items-center text-xs text-terminal-amber font-mono">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              5.2MB model size per language
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-6 transition duration-300 hover:border-terminal-green">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 flex items-center justify-center rounded-md bg-terminal-dark text-terminal-green mr-3">
+              💻
+            </div>
+            <h3 class="text-lg font-semibold">Client-Side Power</h3>
+          </div>
+          <p class="text-terminal-gray text-sm leading-relaxed">No server processing, no accounts, no tracking - just a simple, powerful speech synthesis engine at your fingertips.</p>
+          <div class="mt-4 border-t border-terminal-light pt-4">
+            <div class="flex items-center text-xs text-terminal-amber font-mono">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              WebAssembly optimized
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance metrics - Adding this for technical credibility -->
+      <div class="mt-12 bg-terminal-black border border-terminal-light rounded-md p-4 max-w-5xl mx-auto">
+        <h3 class="text-sm font-mono text-terminal-green mb-4">System Performance Metrics</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-3 bg-terminal-dark border border-terminal-light rounded-md">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Processing Speed</div>
+            <div class="text-lg text-terminal-lightGray font-mono">~10ms/word</div>
+          </div>
+          <div class="p-3 bg-terminal-dark border border-terminal-light rounded-md">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Memory Usage</div>
+            <div class="text-lg text-terminal-lightGray font-mono">~85MB</div>
+          </div>
+          <div class="p-3 bg-terminal-dark border border-terminal-light rounded-md">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Daily Conversions</div>
+            <div class="text-lg text-terminal-lightGray font-mono">12,458</div>
+          </div>
+          <div class="p-3 bg-terminal-dark border border-terminal-light rounded-md">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Model Version</div>
+            <div class="text-lg text-terminal-lightGray font-mono">Piper v2.0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Languages Section -->
+  <section id="languages" class="py-16">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="text-center mb-12">
+        <div class="inline-block mb-3 px-3 py-1 bg-terminal-light rounded-md text-xs font-mono text-terminal-green">
+          Voice Options
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold mb-3">Supported Voices</h2>
+        <p class="text-terminal-gray text-base max-w-2xl mx-auto">Neural speech synthesis in multiple languages and accents</p>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇺🇸</span>
+          <p class="font-mono text-sm text-terminal-lightGray">English (US)</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">2 voices</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇪🇸</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Spanish</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇫🇷</span>
+          <p class="font-mono text-sm text-terminal-lightGray">French</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇩🇪</span>
+          <p class="font-mono text-sm text-terminal-lightGray">German</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇮🇹</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Italian</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇵🇹</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Portuguese</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇷🇺</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Russian</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇯🇵</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Japanese</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇨🇳</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Chinese</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇰🇷</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Korean</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇸🇦</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Arabic</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+        <div class="bg-terminal-black border border-terminal-light rounded-md p-3 text-center transition duration-300 hover:border-terminal-green hover:-translate-y-1">
+          <span class="text-xl mb-2 block">🇮🇳</span>
+          <p class="font-mono text-sm text-terminal-lightGray">Hindi</p>
+          <p class="text-xs font-mono text-terminal-gray mt-1">1 voice</p>
+        </div>
+      </div>
+
+      <!-- Technical Info - Adding for credibility -->
+      <div class="mt-10 p-4 bg-terminal-black border border-terminal-light rounded-md font-mono text-xs text-terminal-gray max-w-3xl mx-auto">
+        <div class="flex items-start space-x-2">
+          <div class="text-terminal-amber">ℹ</div>
+          <div>
+            <p class="mb-2">All voice models are fine-tuned variants of Piper TTS using 24kHz audio samples. Each language model is approximately 5.2MB in size and uses a spectrogram-based autoregressive synthesis approach.</p>
+            <p>Voice selection uses the ISO 639-1 language code standard for consistent cross-platform compatibility.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="py-16 bg-terminal-dark border-y border-terminal-light">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="text-center mb-12">
+        <div class="inline-block mb-3 px-3 py-1 bg-terminal-light rounded-md text-xs font-mono text-terminal-green">
+          Support
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold mb-3">Frequently Asked Questions</h2>
+        <p class="text-terminal-gray text-base max-w-2xl mx-auto">Technical details about our speech synthesis engine</p>
+      </div>
+
+      <div class="max-w-3xl mx-auto">
+        <div class="bg-terminal-black rounded-md border border-terminal-light mb-4 transition-all duration-300">
+          <div class="flex justify-between items-center p-4 cursor-pointer faq-question">
+            <span class="font-semibold text-base question-text">How does this tool work?</span>
+            <span class="indicator w-6 h-6 flex items-center justify-center rounded-full bg-terminal-light text-terminal-lightGray text-sm font-mono">+</span>
+          </div>
+          <div class="px-4 pb-4 text-terminal-gray text-sm hidden faq-answer">
+            <p class="mb-2">NaturalTTS uses Piper, a neural speech synthesis system that converts text into speech through a spectrogram-based autoregressive model. Everything runs directly in your browser using WebAssembly technology.</p>
+            <p>The system processes your text in four stages:</p>
+            <ol class="list-decimal pl-5 mt-2 space-y-1 text-terminal-lightGray">
+              <li>Text normalization and phoneme conversion</li>
+              <li>Linguistic feature extraction</li>
+              <li>Neural network speech prediction</li>
+              <li>Audio waveform generation</li>
+            </ol>
+            <div class="mt-2 text-xs font-mono bg-terminal-dark p-2 rounded-md border border-terminal-light">
+              <span class="text-terminal-green">$</span> <span class="text-terminal-lightGray">piper --model en_US_female.onnx --output_file speech.wav</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-terminal-black rounded-md border border-terminal-light mb-4 transition-all duration-300">
+          <div class="flex justify-between items-center p-4 cursor-pointer faq-question">
+            <span class="font-semibold text-base question-text">Is there a text limit?</span>
+            <span class="indicator w-6 h-6 flex items-center justify-center rounded-full bg-terminal-light text-terminal-lightGray text-sm font-mono">+</span>
+          </div>
+          <div class="px-4 pb-4 text-terminal-gray text-sm hidden faq-answer">
+            <p class="mb-2">Yes, you can convert up to 5,000 characters at once (approximately 750-1000 words). This limit helps ensure optimal performance in the browser environment.</p>
+            <p>For longer texts, we recommend breaking them into smaller chunks and processing them sequentially. The memory footprint increases linearly with text length.</p>
+            <div class="mt-2 p-2 bg-terminal-dark rounded-md border border-terminal-light">
+              <div class="text-xs font-mono flex items-center">
+                <span class="text-terminal-amber">Memory usage:</span> 
+                <div class="ml-2 w-full bg-terminal-light rounded-full h-2">
+                  <div class="bg-terminal-green h-2 rounded-full" style="width: 40%"></div>
+                </div>
+                <span class="ml-2 text-terminal-gray">40%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-terminal-black rounded-md border border-terminal-light mb-4 transition-all duration-300">
+          <div class="flex justify-between items-center p-4 cursor-pointer faq-question">
+            <span class="font-semibold text-base question-text">What file format is the audio downloaded in?</span>
+            <span class="indicator w-6 h-6 flex items-center justify-center rounded-full bg-terminal-light text-terminal-lightGray text-sm font-mono">+</span>
+          </div>
+          <div class="px-4 pb-4 text-terminal-gray text-sm hidden faq-answer">
+            <p class="mb-2">All generated audio is available in MP3 format, which offers excellent audio quality with small file sizes. MP3 files are compatible with virtually all devices and media players.</p>
+            <div class="mt-2 text-xs font-mono">
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-terminal-dark p-2 rounded-md border border-terminal-light">
+                  <span class="text-terminal-amber">Format:</span> MP3
+                </div>
+                <div class="bg-terminal-dark p-2 rounded-md border border-terminal-light">
+                  <span class="text-terminal-amber">Sample Rate:</span> 24kHz
+                </div>
+                <div class="bg-terminal-dark p-2 rounded-md border border-terminal-light">
+                  <span class="text-terminal-amber">Bit Rate:</span> 128kbps
+                </div>
+                <div class="bg-terminal-dark p-2 rounded-md border border-terminal-light">
+                  <span class="text-terminal-amber">Channels:</span> Mono
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-terminal-black rounded-md border border-terminal-light mb-4 transition-all duration-300">
+          <div class="flex justify-between items-center p-4 cursor-pointer faq-question">
+            <span class="font-semibold text-base question-text">Is my data private?</span>
+            <span class="indicator w-6 h-6 flex items-center justify-center rounded-full bg-terminal-light text-terminal-lightGray text-sm font-mono">+</span>
+          </div>
+          <div class="px-4 pb-4 text-terminal-gray text-sm hidden faq-answer">
+            <p class="mb-2">Yes, completely. All processing happens locally in your browser, and no data is sent to any server. Your text never leaves your device, ensuring 100% privacy and security.</p>
+            <div class="mt-2 p-2 bg-terminal-dark rounded-md border border-terminal-light text-xs font-mono">
+              <span class="text-terminal-green">// Network activity during processing</span><br>
+              <span class="text-terminal-lightGray">$ curl -I https://naturaltts.app/api</span><br>
+              <span class="text-terminal-red">No requests sent: All processing done locally</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-terminal-black rounded-md border border-terminal-light">
+          <div class="flex justify-between items-center p-4 cursor-pointer faq-question">
+            <span class="font-semibold text-base question-text">Can I use the generated audio for commercial purposes?</span>
+            <span class="indicator w-6 h-6 flex items-center justify-center rounded-full bg-terminal-light text-terminal-lightGray text-sm font-mono">+</span>
+          </div>
+          <div class="px-4 pb-4 text-terminal-gray text-sm hidden faq-answer">
+            <p class="mb-2">Yes, you can use the generated audio for personal and commercial projects. Since the processing is done locally on your device, you own the output you create.</p>
+            <div class="mt-2 text-xs font-mono text-terminal-amber">
+              <p>Common use cases:</p>
+              <ul class="list-disc pl-5 mt-1 space-y-1 text-terminal-lightGray">
+                <li>YouTube videos</li>
+                <li>Podcast intros</li>
+                <li>E-learning content</li>
+                <li>Mobile applications</li>
+                <li>Accessibility tools</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA Section -->
+  <section class="py-16 text-center">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="bg-terminal-dark border border-terminal-light rounded-md p-8 max-w-3xl mx-auto">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">Start Creating Speech Today</h2>
+        <p class="text-terminal-gray text-base mb-8">Convert your text to speech with just a few clicks. No sign-up required.</p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="#" class="py-3 px-6 bg-terminal-green text-terminal-black rounded-md font-medium text-sm hover:bg-opacity-90 transition shadow-md hover:shadow-lg hover:-translate-y-0.5 transform duration-300 focus:outline-none focus:ring-2 focus:ring-terminal-green focus:ring-opacity-50">
+            > Try NaturalTTS Now
+          </a>
+          <a href="#features" class="py-3 px-6 bg-terminal-black text-terminal-lightGray border border-terminal-light rounded-md font-medium text-sm hover:bg-terminal-light transition shadow-md hover:shadow-lg duration-300 focus:outline-none focus:ring-2 focus:ring-terminal-light focus:ring-opacity-50">
+            > View Technical Specs
+          </a>
+        </div>
+      </div>
+
+      <!-- System status widget -->
+      <div class="mt-8 bg-terminal-black border border-terminal-light rounded-md p-4 max-w-3xl mx-auto">
+        <h3 class="text-sm font-mono text-terminal-green mb-3">System Status</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-2 bg-terminal-dark border border-terminal-light rounded-md text-center">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">API Status</div>
+            <div class="text-sm text-terminal-green flex items-center justify-center">
+              <span class="h-2 w-2 bg-terminal-green rounded-full mr-1"></span>
+              Operational
+            </div>
+          </div>
+          <div class="p-2 bg-terminal-dark border border-terminal-light rounded-md text-center">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Last Updated</div>
+            <div class="text-sm text-terminal-lightGray font-mono">2025-04-28</div>
+          </div>
+          <div class="p-2 bg-terminal-dark border border-terminal-light rounded-md text-center">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Models</div>
+            <div class="text-sm text-terminal-lightGray font-mono">12 / 12 Online</div>
+          </div>
+          <div class="p-2 bg-terminal-dark border border-terminal-light rounded-md text-center">
+            <div class="text-xs text-terminal-gray mb-1 font-mono">Service Uptime</div>
+            <div class="text-sm text-terminal-lightGray font-mono">99.97%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-terminal-black text-terminal-lightGray py-10 border-t border-terminal-light">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4 flex items-center text-terminal-green font-mono">
+            <span class="text-xl mr-2">🔊</span>NaturalTTS
+          </h3>
+          <p class="text-terminal-gray text-sm mb-4">A free, browser-based text-to-speech tool powered by Piper. No login required, your data stays private.</p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-terminal-gray hover:text-terminal-green transition">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z" />
+              </svg>
+            </a>
+            <a href="#" class="text-terminal-gray hover:text-terminal-green transition">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-base font-semibold mb-4 text-terminal-lightGray">Quick Links</h3>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="text-terminal-gray hover:text-terminal-green transition">Home</a></li>
+            <li><a href="#features" class="text-terminal-gray hover:text-terminal-green transition">Features</a></li>
+            <li><a href="#languages" class="text-terminal-gray hover:text-terminal-green transition">Voices</a></li>
+            <li><a href="#faq" class="text-terminal-gray hover:text-terminal-green transition">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-base font-semibold mb-4 text-terminal-lightGray">Resources</h3>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="text-terminal-gray hover:text-terminal-green transition">API Documentation</a></li>
+            <li><a href="#" class="text-terminal-gray hover:text-terminal-green transition">Privacy Policy</a></li>
+            <li><a href="#" class="text-terminal-gray hover:text-terminal-green transition">Terms of Service</a></li>
+            <li><a href="#" class="text-terminal-gray hover:text-terminal-green transition">GitHub Repository</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-6 border-t border-terminal-light text-center text-xs text-terminal-gray font-mono">
+        <p class="mb-2">© 2025 NaturalTTS. All rights reserved.</p>
+        <p>Built with Piper TTS v2.0 | WebAssembly | 5,320,157 words processed today</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Set current time
+      function updateTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
+      }
+      
+      setInterval(updateTime, 1000);
+      updateTime();
+      
+      // Character counter
+      const textInput = document.getElementById('text-input');
+      const charCount = document.getElementById('char-count');
+      const clearBtn = document.getElementById('clear-btn');
+      const generateBtn = document.getElementById('generate-btn');
+      const sampleBtn = document.getElementById('sample-btn');
+      const playerContainer = document.getElementById('player-container');
+      const audioPlayer = document.getElementById('audio-player');
+      const downloadBtn = document.getElementById('download-btn');
+      const audioDuration = document.getElementById('audio-duration');
+
+      // Mobile menu elements
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+
+      // Dropdown menu functionality
+      if (mobileMenuButton) {
+        mobileMenuButton.addEventListener('click', function () {
+          // Toggle mobile menu visibility
+          mobileMenu.classList.toggle('hidden');
+        });
+      }
+
+      // Close menu when clicking a link
+      if (mobileMenuLinks.length > 0) {
+        mobileMenuLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            // Hide the mobile menu
+            mobileMenu.classList.add('hidden');
+
+            // Handle smooth scrolling for anchor links
+            const href = this.getAttribute('href');
+            if (href.startsWith('#') && href !== '#') {
+              const target = document.querySelector(href);
+              if (target) {
+                event.preventDefault();
+                window.scrollTo({
+                  top: target.offsetTop - 80, // Adjust for header height
+                  behavior: 'smooth'
+                });
+              }
+            }
+          });
+        });
+      }
+
+      // Update character count
+      if (textInput) {
+        textInput.addEventListener('input', function () {
+          const length = this.value.length;
+          charCount.textContent = length;
+
+          // Visual feedback on character limit
+          if (length > 4500) {
+            charCount.classList.add('text-terminal-amber');
+          } else if (length > 4900) {
+            charCount.classList.remove('text-terminal-amber');
+            charCount.classList.add('text-terminal-red');
+          } else {
+            charCount.classList.remove('text-terminal-amber', 'text-terminal-red');
+          }
+        });
+      }
+
+      // Clear text
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          textInput.value = '';
+          charCount.textContent = '0';
+          charCount.classList.remove('text-terminal-amber', 'text-terminal-red');
+        });
+      }
+
+      // Try a sample
+      if (sampleBtn) {
+        sampleBtn.addEventListener('click', function () {
+          textInput.value = "Welcome to NaturalTTS, a powerful text-to-speech converter that runs entirely in your browser. This sample demonstrates the natural-sounding voices our system can generate. The audio quality is excellent, with proper intonation and rhythm that closely mimics human speech.";
+          charCount.textContent = textInput.value.length;
+        });
+      }
+
+      // Generate speech (this is a mockup since we don't have Piper integration yet)
+      if (generateBtn) {
+        generateBtn.addEventListener('click', function () {
+          if (textInput.value.trim() === '') {
+            alert('Please enter some text to convert to speech.');
+            return;
+          }
+
+          // Show loading state
+          const originalText = this.innerHTML;
+          this.innerHTML = '<span class="animate-spin inline-block mr-2">⟳</span> Processing...';
+          this.disabled = true;
+
+          // Add console-like output
+          const consoleLines = document.querySelectorAll('.console-line');
+          if (consoleLines.length > 0) {
+            const processingLine = document.createElement('div');
+            processingLine.classList.add('font-mono', 'text-terminal-amber', 'text-sm', 'mb-2', 'console-line', 'console-prompt');
+            processingLine.textContent = 'Processing text... ' + textInput.value.length + ' characters';
+            consoleLines[consoleLines.length - 1].after(processingLine);
+          }
+
+          // Simulate API call delay
+          setTimeout(function () {
+            // In a real implementation, this is where you'd call Piper
+            // For the mockup, we'll just show the player
+            playerContainer.classList.remove('hidden');
+
+            // Add console success message
+            const successLine = document.createElement('div');
+            successLine.classList.add('font-mono', 'text-terminal-green', 'text-sm', 'mb-2', 'console-line');
+            successLine.textContent = '✓ Speech generated successfully. (321ms)';
+            processingLine.after(successLine);
+
+            // Set up the audio player (using a sample audio for demonstration)
+            audioPlayer.src = 'https://cdn.plyr.io/static/demo/Kishi_Bashi_-_Its_Christmas_But_Its_Not_White_Here_in_Our_Town.mp3';
+
+            // Reset button
+            generateBtn.innerHTML = originalText;
+            generateBtn.disabled = false;
+
+            // Set up download link (in real app, this would point to the generated file)
+            const filename = document.getElementById('filename').value || 'speech';
+            downloadBtn.setAttribute('download', filename + '.mp3');
+            downloadBtn.setAttribute('href', audioPlayer.src);
+
+            // Set duration (would be actual duration in real implementation)
+            audioDuration.textContent = "00:30.00";
+
+            // Scroll to player
+            playerContainer.scrollIntoView({ behavior: 'smooth' });
+          }, 1500);
+        });
+      }
+
+      // FAQ accordion
+      const faqQuestions = document.querySelectorAll('.faq-question');
+
+      if (faqQuestions.length > 0) {
+        faqQuestions.forEach(question => {
+          question.addEventListener('click', function () {
+            const answer = this.nextElementSibling;
+            const indicator = this.querySelector('.indicator');
+            const isActive = !answer.classList.contains('hidden');
+
+            // Close all answers
+            document.querySelectorAll('.faq-answer').forEach(item => {
+              item.classList.add('hidden');
+            });
+
+            document.querySelectorAll('.faq-question .indicator').forEach(item => {
+              item.textContent = '+';
+            });
+
+            // Open clicked answer if it wasn't already open
+            if (!isActive) {
+              answer.classList.remove('hidden');
+              indicator.textContent = '-';
+              // Add active styles
+              question.closest('.bg-terminal-black').classList.add('border-terminal-green');
+            } else {
+              question.closest('.bg-terminal-black').classList.remove('border-terminal-green');
+            }
+          });
+        });
+      }
+
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            window.scrollTo({
+              top: target.offsetTop - 80, // Adjust for header height
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+
+      // Optional: Close mobile menu when clicking outside
+      document.addEventListener('click', function (event) {
+        const isMenuOpen = !mobileMenu.classList.contains('hidden');
+        const isClickInsideMenu = mobileMenu.contains(event.target);
+        const isClickOnMenuButton = mobileMenuButton.contains(event.target);
+
+        if (isMenuOpen && !isClickInsideMenu && !isClickOnMenuButton) {
+          mobileMenu.classList.add('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

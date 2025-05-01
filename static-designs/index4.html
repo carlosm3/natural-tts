@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NaturalTTS - Browser-Based Text to Speech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            '900': '#0f172a',  // Darkest - main background
+                            '800': '#1e293b',  // Card backgrounds
+                            '700': '#334155',  // Borders
+                            '600': '#475569',  // Subtle text
+                            '400': '#94a3b8',  // Secondary text
+                            '300': '#cbd5e1',  // Primary text
+                            '200': '#e2e8f0',  // Bright text
+                        },
+                        primary: {
+                            '900': '#0c4a6e',
+                            '700': '#0369a1',
+                            '500': '#0ea5e9',  // Main accent
+                            '300': '#7dd3fc',
+                            '200': '#bae6fd',
+                        },
+                        accent: {
+                            'yellow': '#facc15',
+                            'green': '#10b981',
+                            'red': '#ef4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #cbd5e1;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .terminal {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-dark-700 sticky top-0 z-50 bg-dark-900/95 backdrop-blur-sm">
+        <div class="container mx-auto px-4 max-w-5xl">
+            <div class="flex justify-between items-center h-16">
+                <a href="#" class="flex items-center">
+                    <span class="text-primary-500 font-mono font-medium text-xl mr-2">></span>
+                    <span class="text-primary-300 font-mono font-medium">NaturalTTS</span>
+                    <span class="text-primary-500 text-xs ml-2 font-mono">v1.2.1</span>
+                </a>
+
+                <!-- System Status -->
+                <div class="hidden md:flex items-center mr-6 space-x-1">
+                    <span class="inline-block h-2 w-2 rounded-full bg-accent-green"></span>
+                    <span class="text-xs text-dark-400">System Online</span>
+                    <span class="text-xs text-dark-600 ml-3 font-mono">28ms</span>
+                </div>
+
+                <!-- Main Nav -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="#converter" class="text-sm text-dark-300 hover:text-primary-300 transition-colors">Converter</a>
+                    <a href="#features" class="text-sm text-dark-300 hover:text-primary-300 transition-colors">Features</a>
+                    <a href="#voices" class="text-sm text-dark-300 hover:text-primary-300 transition-colors">Voices</a>
+                    <a href="#faq" class="text-sm text-dark-300 hover:text-primary-300 transition-colors">FAQ</a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-button" class="md:hidden text-dark-300 hover:text-primary-300 transition-colors focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-dark-700 bg-dark-800">
+            <nav class="container mx-auto px-4 py-3">
+                <ul class="space-y-2">
+                    <li><a href="#converter" class="block py-2 text-sm text-dark-300 hover:text-primary-300 transition-colors">Converter</a></li>
+                    <li><a href="#features" class="block py-2 text-sm text-dark-300 hover:text-primary-300 transition-colors">Features</a></li>
+                    <li><a href="#voices" class="block py-2 text-sm text-dark-300 hover:text-primary-300 transition-colors">Voices</a></li>
+                    <li><a href="#faq" class="block py-2 text-sm text-dark-300 hover:text-primary-300 transition-colors">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main>
+        <!-- Converter Section -->
+        <section id="converter" class="py-12 md:py-16">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="flex flex-col md:flex-row items-start gap-6 md:gap-10">
+                    <!-- Left column - Info -->
+                    <div class="w-full md:w-1/3">
+                        <h1 class="text-xl md:text-2xl font-semibold text-dark-200 mb-3">NaturalTTS</h1>
+                        <p class="text-dark-400 text-sm mb-4">A browser-based text-to-speech engine powered by Piper. Runs entirely in your browser with no server processing.</p>
+                        
+                        <!-- Stats -->
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <div class="terminal p-2">
+                                <div class="text-xs text-dark-400">Daily Renders</div>
+                                <div class="text-primary-300 text-lg">21,508</div>
+                            </div>
+                            <div class="terminal p-2">
+                                <div class="text-xs text-dark-400">Response Time</div>
+                                <div class="text-primary-300 text-lg">28ms</div>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Info -->
+                        <div class="terminal p-3 mb-6">
+                            <div class="flex items-center mb-1">
+                                <span class="inline-block h-2 w-2 rounded-full bg-accent-green mr-2"></span>
+                                <span class="text-xs text-dark-300">Privacy Mode</span>
+                            </div>
+                            <p class="text-xs text-dark-400">All processing happens entirely in your browser. Your text never leaves your device.</p>
+                        </div>
+
+                        <!-- Version Info -->
+                        <div class="text-xs text-dark-600 font-mono">
+                            <div>ENGINE: piper-tts 1.2.1</div>
+                            <div>VOICES: 12 languages</div>
+                            <div>UPDATED: 2025-04-30</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right column - Converter -->
+                    <div class="w-full md:w-2/3 terminal p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <span class="text-primary-500 font-mono text-sm mr-2">$</span>
+                                <span class="text-dark-300 font-mono text-sm">text-to-speech</span>
+                            </div>
+                            <div class="text-dark-600 text-xs font-mono">5000 char max</div>
+                        </div>
+                        
+                        <!-- Text Input -->
+                        <div class="mb-4">
+                            <textarea id="text-input" 
+                                class="w-full h-40 p-3 text-dark-200 bg-dark-900 border border-dark-700 rounded-sm focus:border-primary-500 focus:outline-none transition-colors font-mono text-sm resize-y"
+                                placeholder="Enter text to convert to speech..."></textarea>
+                            <div class="flex justify-between text-xs mt-1">
+                                <span class="text-dark-600"><span id="char-count">0</span>/5000</span>
+                                <button id="clear-btn" class="text-dark-400 hover:text-primary-300 transition-colors">clear</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Controls -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Voice</label>
+                                <select id="voice" class="w-full bg-dark-900 border border-dark-700 text-dark-300 p-2 text-sm rounded-sm focus:border-primary-500 focus:outline-none">
+                                    <option value="en_US_female">en_US_female</option>
+                                    <option value="en_US_male">en_US_male</option>
+                                    <option value="en_UK_female">en_UK_female</option>
+                                    <option value="en_UK_male">en_UK_male</option>
+                                    <option value="es_female">es_female</option>
+                                    <option value="fr_female">fr_female</option>
+                                    <option value="de_female">de_female</option>
+                                    <option value="it_female">it_female</option>
+                                    <option value="ja_female">ja_female</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Speed</label>
+                                <select id="speed" class="w-full bg-dark-900 border border-dark-700 text-dark-300 p-2 text-sm rounded-sm focus:border-primary-500 focus:outline-none">
+                                    <option value="0.8">0.8x Slow</option>
+                                    <option value="1.0" selected>1.0x Normal</option>
+                                    <option value="1.2">1.2x Fast</option>
+                                    <option value="1.5">1.5x Very Fast</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Filename</label>
+                                <input type="text" id="filename" value="speech" 
+                                    class="w-full bg-dark-900 border border-dark-700 text-dark-300 p-2 text-sm rounded-sm focus:border-primary-500 focus:outline-none">
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3">
+                            <button id="generate-btn" class="flex-1 bg-primary-500 hover:bg-primary-700 text-dark-900 font-medium py-2 px-4 rounded-sm transition-colors text-sm">
+                                Generate Speech
+                            </button>
+                            <button id="sample-btn" class="flex-1 bg-dark-800 hover:bg-dark-700 text-dark-300 border border-dark-700 py-2 px-4 rounded-sm transition-colors text-sm">
+                                Try Sample
+                            </button>
+                        </div>
+                        
+                        <!-- Audio Player (Hidden by Default) -->
+                        <div id="player-container" class="hidden mt-6 pt-4 border-t border-dark-700">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <span class="inline-block h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
+                                    <span class="text-xs text-dark-300 font-mono">Output Ready</span>
+                                </div>
+                                <div class="text-xs text-dark-400" id="audio-info">00:30 | 720KB MP3</div>
+                            </div>
+                            <audio controls id="audio-player" class="w-full h-10 mb-3"></audio>
+                            <a href="#" id="download-btn" class="inline-flex items-center justify-center text-xs bg-dark-800 hover:bg-dark-700 text-primary-300 border border-dark-700 py-2 px-4 rounded-sm transition-colors w-full">
+                                Download MP3
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-12 md:py-16 border-t border-dark-700">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <h2 class="text-xl font-semibold text-dark-200 mb-8">Technical Features</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="terminal p-4">
+                        <div class="flex items-center mb-3">
+                            <span class="inline-block h-2 w-2 rounded-full bg-accent-green mr-2"></span>
+                            <span class="text-sm text-dark-300 font-semibold">Client-Side Processing</span>
+                        </div>
+                        <p class="text-xs text-dark-400 mb-4">All computation runs in WebAssembly directly in your browser. No API calls or server dependency.</p>
+                        <div class="text-xs text-primary-500 font-mono">WASM + AudioContext API</div>
+                    </div>
+                    
+                    <div class="terminal p-4">
+                        <div class="flex items-center mb-3">
+                            <span class="inline-block h-2 w-2 rounded-full bg-accent-yellow mr-2"></span>
+                            <span class="text-sm text-dark-300 font-semibold">Neural Voice Models</span>
+                        </div>
+                        <p class="text-xs text-dark-400 mb-4">Based on Piper TTS system with optimized voice models for natural speech synthesis.</p>
+                        <div class="text-xs text-primary-500 font-mono">12 languages supported</div>
+                    </div>
+                    
+                    <div class="terminal p-4">
+                        <div class="flex items-center mb-3">
+                            <span class="inline-block h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
+                            <span class="text-sm text-dark-300 font-semibold">Full Offline Support</span>
+                        </div>
+                        <p class="text-xs text-dark-400 mb-4">Works without internet connection after initial load. Ideal for privacy-sensitive content.</p>
+                        <div class="text-xs text-primary-500 font-mono">Progressive Web App</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Terminal Demo Section -->
+        <section class="py-12 md:py-16 border-t border-dark-700">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <h2 class="text-xl font-semibold text-dark-200 mb-6">Performance Metrics</h2>
+                
+                <div class="terminal p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <span class="text-primary-500 font-mono text-sm mr-2">$</span>
+                            <span class="text-dark-300 font-mono text-sm">system stats</span>
+                        </div>
+                        <div class="text-dark-600 text-xs font-mono">updated: 28s ago</div>
+                    </div>
+                    
+                    <div class="font-mono text-xs space-y-1 mb-4">
+                        <div><span class="text-dark-400">Engine Version:</span> <span class="text-primary-300">piper-tts 1.2.1</span></div>
+                        <div><span class="text-dark-400">Audio Backend:</span> <span class="text-primary-300">WebAudio</span></div>
+                        <div><span class="text-dark-400">Avg. Processing:</span> <span class="text-primary-300">28ms per request</span></div>
+                        <div><span class="text-dark-400">Model Size:</span> <span class="text-primary-300">12MB (compressed)</span></div>
+                        <div><span class="text-dark-400">Browser Support:</span> <span class="text-primary-300">Chrome 80+, Firefox 75+, Safari 13.1+</span></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <div class="text-xs text-dark-400 mb-1">Daily Usage</div>
+                            <div class="h-4 bg-dark-900 rounded-sm overflow-hidden">
+                                <div class="h-full bg-primary-500" style="width: 65%"></div>
+                            </div>
+                            <div class="text-xs text-dark-600 mt-1">65%</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-dark-400 mb-1">CPU Load</div>
+                            <div class="h-4 bg-dark-900 rounded-sm overflow-hidden">
+                                <div class="h-full bg-accent-green" style="width: 32%"></div>
+                            </div>
+                            <div class="text-xs text-dark-600 mt-1">32%</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-dark-400 mb-1">Memory</div>
+                            <div class="h-4 bg-dark-900 rounded-sm overflow-hidden">
+                                <div class="h-full bg-accent-yellow" style="width: 48%"></div>
+                            </div>
+                            <div class="text-xs text-dark-600 mt-1">48%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Voices Section -->
+        <section id="voices" class="py-12 md:py-16 border-t border-dark-700">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <h2 class="text-xl font-semibold text-dark-200 mb-8">Available Voice Models</h2>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇺🇸</span>
+                            <span class="text-dark-300 text-sm">English (US)</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">en_US_female | en_US_male</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇬🇧</span>
+                            <span class="text-dark-300 text-sm">English (UK)</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">en_UK_female | en_UK_male</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇪🇸</span>
+                            <span class="text-dark-300 text-sm">Spanish</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">es_female</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇫🇷</span>
+                            <span class="text-dark-300 text-sm">French</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">fr_female</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇩🇪</span>
+                            <span class="text-dark-300 text-sm">German</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">de_female</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇮🇹</span>
+                            <span class="text-dark-300 text-sm">Italian</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">it_female</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇯🇵</span>
+                            <span class="text-dark-300 text-sm">Japanese</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">ja_female</div>
+                    </div>
+                    
+                    <div class="terminal p-3">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">🇨🇳</span>
+                            <span class="text-dark-300 text-sm">Chinese</span>
+                        </div>
+                        <div class="text-xs text-dark-600 font-mono">zh_female</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="py-12 md:py-16 border-t border-dark-700">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <h2 class="text-xl font-semibold text-dark-200 mb-8">FAQ</h2>
+                
+                <div class="space-y-4">
+                    <div class="terminal">
+                        <div class="flex justify-between items-center p-3 cursor-pointer faq-question">
+                            <span class="text-dark-300 text-sm font-medium">How does this tool work?</span>
+                            <span class="text-primary-500">+</span>
+                        </div>
+                        <div class="px-3 pb-3 hidden faq-answer">
+                            <p class="text-xs text-dark-400">
+                                NaturalTTS uses Piper, a neural speech synthesis system that converts text to speech. Everything runs in your browser using WebAssembly, so your text never leaves your device. The system processes your text, analyzes linguistic features, and generates natural-sounding speech that can be played or downloaded as an MP3.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="terminal">
+                        <div class="flex justify-between items-center p-3 cursor-pointer faq-question">
+                            <span class="text-dark-300 text-sm font-medium">Is there a text limit?</span>
+                            <span class="text-primary-500">+</span>
+                        </div>
+                        <div class="px-3 pb-3 hidden faq-answer">
+                            <p class="text-xs text-dark-400">
+                                Yes, you can convert up to 5,000 characters at once (approximately 750-1000 words). This limit helps ensure optimal performance in the browser environment. For longer texts, we recommend breaking them into smaller chunks and processing them sequentially.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="terminal">
+                        <div class="flex justify-between items-center p-3 cursor-pointer faq-question">
+                            <span class="text-dark-300 text-sm font-medium">What file format is the audio downloaded in?</span>
+                            <span class="text-primary-500">+</span>
+                        </div>
+                        <div class="px-3 pb-3 hidden faq-answer">
+                            <p class="text-xs text-dark-400">
+                                All generated audio is available in MP3 format, which offers excellent audio quality with small file sizes. MP3 files are compatible with virtually all devices and media players, making them ideal for a wide range of applications.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="terminal">
+                        <div class="flex justify-between items-center p-3 cursor-pointer faq-question">
+                            <span class="text-dark-300 text-sm font-medium">Is my data private?</span>
+                            <span class="text-primary-500">+</span>
+                        </div>
+                        <div class="px-3 pb-3 hidden faq-answer">
+                            <p class="text-xs text-dark-400">
+                                Yes, completely. All processing happens locally in your browser, and no data is sent to any server. Your text never leaves your device, ensuring 100% privacy and security. This makes NaturalTTS an excellent choice for sensitive content or situations where data privacy is a priority.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="terminal">
+                        <div class="flex justify-between items-center p-3 cursor-pointer faq-question">
+                            <span class="text-dark-300 text-sm font-medium">Can I use the generated audio for commercial purposes?</span>
+                            <span class="text-primary-500">+</span>
+                        </div>
+                        <div class="px-3 pb-3 hidden faq-answer">
+                            <p class="text-xs text-dark-400">
+                                Yes, you can use the generated audio for personal and commercial projects. Since the processing is done locally on your device, you own the output you create. This makes NaturalTTS perfect for creating content for YouTube videos, podcasts, e-learning materials, and other media projects.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark-800 border-t border-dark-700 py-8">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="flex flex-col md:flex-row justify-between">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center mb-3">
+                        <span class="text-primary-500 font-mono text-lg mr-2">></span>
+                        <span class="text-primary-300 font-mono">NaturalTTS</span>
+                    </div>
+                    <p class="text-dark-400 text-xs max-w-xs">
+                        A browser-based text-to-speech engine with complete privacy. No login or server processing required.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-dark-300 text-sm font-medium mb-3">Links</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">Home</a></li>
+                            <li><a href="#converter" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">Converter</a></li>
+                            <li><a href="#features" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">Features</a></li>
+                            <li><a href="#faq" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">FAQ</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-dark-300 text-sm font-medium mb-3">Resources</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">Documentation</a></li>
+                            <li><a href="#" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">GitHub</a></li>
+                            <li><a href="#" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">Privacy Policy</a></li>
+                            <li><a href="#" class="text-dark-400 hover:text-primary-300 transition-colors text-xs">Terms</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-dark-700 flex flex-col md:flex-row justify-between items-center">
+                <div class="text-dark-600 text-xs font-mono mb-3 md:mb-0">© 2025 NaturalTTS | MIT License</div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-dark-400 hover:text-primary-300 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="text-dark-400 hover:text-primary-300 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+            
+            // Character counter
+            const textInput = document.getElementById('text-input');
+            const charCount = document.getElementById('char-count');
+            
+            if (textInput && charCount) {
+                textInput.addEventListener('input', function() {
+                    const length = this.value.length;
+                    charCount.textContent = length;
+                    
+                    if (length > 4500) {
+                        charCount.classList.add('text-accent-yellow');
+                    } else if (length > 4900) {
+                        charCount.classList.remove('text-accent-yellow');
+                        charCount.classList.add('text-accent-red');
+                    } else {
+                        charCount.classList.remove('text-accent-yellow', 'text-accent-red');
+                    }
+                });
+            }
+            
+            // Clear button
+            const clearBtn = document.getElementById('clear-btn');
+            
+            if (clearBtn && textInput && charCount) {
+                clearBtn.addEventListener('click', function() {
+                    textInput.value = '';
+                    charCount.textContent = '0';
+                    charCount.classList.remove('text-accent-yellow', 'text-accent-red');
+                });
+            }
+            
+            // Sample button
+            const sampleBtn = document.getElementById('sample-btn');
+            
+            if (sampleBtn && textInput && charCount) {
+                sampleBtn.addEventListener('click', function() {
+                    textInput.value = "Welcome to NaturalTTS, a powerful text-to-speech converter that runs entirely in your browser. This sample demonstrates the natural-sounding voices our system can generate. The audio quality is excellent, with proper intonation and rhythm that closely mimics human speech.";
+                    charCount.textContent = textInput.value.length;
+                });
+            }
+            
+            // Generate speech button
+            const generateBtn = document.getElementById('generate-btn');
+            const playerContainer = document.getElementById('player-container');
+            const audioPlayer = document.getElementById('audio-player');
+            const downloadBtn = document.getElementById('download-btn');
+            
+            if (generateBtn && playerContainer && audioPlayer && downloadBtn) {
+                generateBtn.addEventListener('click', function() {
+                    if (textInput.value.trim() === '') {
+                        alert('Please enter some text to convert to speech.');
+                        return;
+                    }
+                    
+                    // Show loading state
+                    this.textContent = 'Processing...';
+                    this.disabled = true;
+                    
+                    // Simulate processing delay
+                    setTimeout(function() {
+                        // Show player
+                        playerContainer.classList.remove('hidden');
+                        
+                        // Use a sample audio for demonstration
+                        audioPlayer.src = 'https://cdn.plyr.io/static/demo/Kishi_Bashi_-_Its_Christmas_But_Its_Not_White_Here_in_Our_Town.mp3';
+                        
+                        // Reset button
+                        generateBtn.textContent = 'Generate Speech';
+                        generateBtn.disabled = false;
+                        
+                        // Set up download link
+                        const filename = document.getElementById('filename').value || 'speech';
+                        downloadBtn.setAttribute('download', filename + '.mp3');
+                        downloadBtn.setAttribute('href', audioPlayer.src);
+                        
+                        // Scroll to player
+                        playerContainer.scrollIntoView({ behavior: 'smooth' });
+                    }, 1500);
+                });
+            }
+            
+            // FAQ accordion
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            
+            if (faqQuestions.length > 0) {
+                faqQuestions.forEach(question => {
+                    question.addEventListener('click', function() {
+                        const answer = this.nextElementSibling;
+                        const indicator = this.querySelector('.text-primary-500');
+                        
+                        // Toggle current answer
+                        answer.classList.toggle('hidden');
+                        indicator.textContent = answer.classList.contains('hidden') ? '+' : '-';
+                    });
+                });
+            }
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const target = document.querySelector(this.getAttribute('href'));
+                    
+                    if (target) {
+                        e.preventDefault();
+                        
+                        // Close mobile menu if open
+                        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                            mobileMenu.classList.add('hidden');
+                        }
+                        
+                        // Scroll to target
+                        window.scrollTo({
+                            top: target.offsetTop - 64, // Account for fixed header
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
