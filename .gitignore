@@ -1,0 +1,68 @@
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Dependency directories
+node_modules/
+__pycache__/
+*.egg-info/
+.eggs/
+
+# Build directories
+dist/
+build/
+out/
+.output
+.vercel
+.netlify
+.wrangler
+*/.svelte-kit
+*/build
+*.pyc
+*.pyo
+*.pyd
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output files
+repomix-output.txt
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Miscellaneous
+*.lock
+*.pid
+*.seed
+*.pid.lock
