@@ -7,10 +7,6 @@
                 <span class="text-white font-mono text-sm">NaturalTTS</span>
                 <span class="text-gray-400 text-xs ml-2">v2.3.1</span>
             </div>
-            <div class="flex items-center mb-4 md:mb-0">
-                <span class="h-2 w-2 bg-success rounded-full mr-1.5"></span>
-                <span class="text-xs text-gray-300">System Online</span>
-            </div>
             <div class="flex flex-wrap justify-center text-center md:text-right">
                 <a href="#" class="text-gray-400 hover:text-white text-xs mx-2 transition-colors">Contact</a>
                 <a href="#" class="text-gray-400 hover:text-white text-xs mx-2 transition-colors">Privacy</a>
