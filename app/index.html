@@ -175,15 +175,9 @@
                                 <label class="block text-xs text-light-300 mb-1.5" for="voice">Voice</label>
                                 <select id="voice" x-model="voice"
                                     class="w-full bg-white border border-light-600 rounded-md p-2 text-sm text-light-100 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                                    <option value="en_US_female">en-US Female</option>
-                                    <option value="en_US_male">en-US Male</option>
-                                    <option value="en_UK_female">en-UK Female</option>
-                                    <option value="en_UK_male">en-UK Male</option>
-                                    <option value="es_female">es Female</option>
-                                    <option value="fr_female">fr Female</option>
-                                    <option value="de_female">de Female</option>
-                                    <option value="it_female">it Female</option>
-                                    <option value="ja_female">ja Female</option>
+                                    <template x-for="v in voices" :key="v">
+                                        <option :value="v" x-text="v"></option>
+                                    </template>
                                 </select>
                             </div>
                             <div>
@@ -350,12 +344,12 @@
         </section>
 
         <!-- Voices Section -->
-        <section id="voices" class="py-8 md:py-12 border-t border-light-700">
+        <section id="voices" class="py-8 md:py-12 border-t border-light-700" x-data="languages">
             <div class="container mx-auto px-4 max-w-3xl">
                 <h2 class="text-xl font-semibold text-light-100 mb-6">Supported Voices</h2>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    <template x-for="language in languages" :key="language.name">
+                    <template x-for="language in items" :key="language.name">
                         <div class="border border-light-600 bg-white p-3 rounded-md text-center shadow-sm">
                             <div class="text-xl mb-1" x-text="language.flag"></div>
                             <div class="text-light-100 text-sm" x-text="language.name"></div>
@@ -366,12 +360,12 @@
         </section>
 
         <!-- FAQ Section -->
-        <section id="faq" class="py-8 md:py-12 border-t border-light-700 bg-light-900">
+        <section id="faq" class="py-8 md:py-12 border-t border-light-700 bg-light-900" x-data="faqData">
             <div class="container mx-auto px-4 max-w-3xl">
                 <h2 class="text-xl font-semibold text-light-100 mb-6">FAQ</h2>
 
                 <div class="space-y-4">
-                    <template x-for="(item, index) in faqItems" :key="index">
+                    <template x-for="(item, index) in items" :key="index">
                         <div class="border border-light-600 bg-white rounded-md overflow-hidden shadow-sm">
                             <button @click="toggleFaq(index)"
                                 class="w-full text-left p-4 flex justify-between items-center focus:outline-none faq-question">
@@ -418,122 +412,49 @@
     </footer>
 
     <script>
-        function app() {
-            return {
-                // Main state
-                mobileMenuOpen: false,
-                textInput: '',
-                charCount: 0,
-                voice: 'en_US_female',
-                speed: '1.0',
-                filename: 'output',
-                processing: false,
-                audioGenerated: false,
-                audioUrl: '',
-                audioDuration: '00:00 / MP3 · 0.0MB',
+        // Direct initialization of languages and FAQ data for Alpine.js
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('languages', () => ({
+                items: [
+                    { name: 'English', flag: '🇺🇸' },
+                    { name: 'Spanish', flag: '🇪🇸' },
+                    { name: 'French', flag: '🇫🇷' },
+                    { name: 'German', flag: '🇩🇪' },
+                    { name: 'Italian', flag: '🇮🇹' },
+                    { name: 'Japanese', flag: '🇯🇵' },
+                    { name: 'Chinese', flag: '🇨🇳' },
+                    { name: 'Russian', flag: '🇷🇺' }
+                ]
+            }));
+
+            Alpine.data('faqData', () => ({
                 openFaqs: [],
-                logs: '<div class="log-system">[System] NaturalTTS Engine initialized</div><div class="log-info">[Info] Loading WASM module (127MB)...</div><div class="log-success">[Success] WASM module loaded in 2341ms</div><div class="log-info">[Info] Initializing audio context...</div><div class="log-success">[Success] Audio context ready</div><div class="log-info">[Info] Loading voice models...</div><div class="log-success">[Success] en_US_female model loaded (42MB)</div><div class="log-success">[Success] en_US_male model loaded (38MB)</div><div class="log-success">[Success] Additional voice models available on demand</div><div class="log-system">[System] Engine ready - Waiting for input</div>',
-
-                // Data
-                languages: [
-                    { flag: '🇺🇸', name: 'English (US)' },
-                    { flag: '🇬🇧', name: 'English (UK)' },
-                    { flag: '🇪🇸', name: 'Spanish' },
-                    { flag: '🇫🇷', name: 'French' },
-                    { flag: '🇩🇪', name: 'German' },
-                    { flag: '🇮🇹', name: 'Italian' },
-                    { flag: '🇯🇵', name: 'Japanese' },
-                    { flag: '🇨🇳', name: 'Chinese' }
-                ],
-
-                faqItems: [
+                items: [
                     {
-                        question: 'How does this tool work?',
-                        answer: '<p>NaturalTTS uses Piper, a neural speech synthesis system that converts text into speech. Everything runs directly in your browser using WebAssembly, which means your text never leaves your device.</p><p class="mt-2">The system processes your text, analyzes linguistic features, and generates natural-sounding speech that can be played back instantly or downloaded as an MP3 file.</p>'
+                        question: 'How does browser-based TTS work?',
+                        answer: 'NaturalTTS works entirely in your browser using WebAssembly to run the neural TTS engine locally. Your text never leaves your device, ensuring complete privacy and eliminating server round-trips.'
                     },
                     {
-                        question: 'Is there a text limit?',
-                        answer: '<p>Yes, you can convert up to 5,000 characters at once (approximately 750-1000 words). This limit helps ensure optimal performance in the browser environment.</p><p class="mt-2">For longer texts, we recommend breaking them into smaller chunks and processing them sequentially.</p>'
+                        question: 'What are the system requirements?',
+                        answer: 'Any modern browser that supports WebAssembly and Web Audio API should work. This includes recent versions of Chrome, Firefox, Safari, and Edge. A decent internet connection is needed for the initial model download.'
                     },
                     {
-                        question: 'What file format is the audio downloaded in?',
-                        answer: '<p>All generated audio is available in MP3 format, which offers excellent audio quality with small file sizes. MP3 files are compatible with virtually all devices and media players.</p>'
+                        question: 'How large are the voice models?',
+                        answer: 'Voice models are typically around 50-100MB each. They are downloaded once and then cached in your browser, so subsequent visits will be faster.'
                     },
                     {
-                        question: 'Is my data private?',
-                        answer: '<p>Yes, completely. All processing happens locally in your browser, and no data is sent to any server. Your text never leaves your device, ensuring 100% privacy and security.</p>'
+                        question: 'Can I use this offline?',
+                        answer: 'Yes! Once you\'ve downloaded a voice model, it will be cached in your browser. You can then use it offline for as long as your browser cache remains intact.'
                     }
                 ],
-
-                // Methods
-                updateCharCount() {
-                    this.charCount = this.textInput.length;
-                },
-
-                loadSample() {
-                    this.textInput = "Welcome to NaturalTTS, a powerful text-to-speech converter that runs entirely in your browser. This sample demonstrates the natural-sounding voices our system can generate.";
-                    this.updateCharCount();
-                    this.addLog('info', 'Sample text loaded');
-                },
-
-                generateSpeech() {
-                    if (this.textInput.trim() === '') {
-                        this.addLog('warning', 'No text entered');
-                        return;
-                    }
-
-                    this.processing = true;
-
-                    // Add log entries with delays
-                    this.addLog('info', `Processing text input (${this.textInput.length} chars)...`);
-
-                    setTimeout(() => this.addLog('info', 'Normalizing text...'), 300);
-                    setTimeout(() => this.addLog('info', 'Generating phonemes...'), 600);
-                    setTimeout(() => this.addLog('info', 'Synthesizing audio...'), 900);
-                    setTimeout(() => this.addLog('success', 'Audio generated in 243ms'), 1200);
-
-                    // Simulate processing delay
-                    setTimeout(() => {
-                        // Set up audio player with sample audio
-                        const audioPlayer = document.getElementById('audio-player');
-                        audioPlayer.src = 'https://cdn.plyr.io/static/demo/Kishi_Bashi_-_Its_Christmas_But_Its_Not_White_Here_in_Our_Town.mp3';
-
-                        this.audioUrl = audioPlayer.src;
-                        this.audioDuration = "00:30 / MP3 · 1.2MB";
-                        this.audioGenerated = true;
-                        this.processing = false;
-
-                        // Scroll to player
-                        document.getElementById('player-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 1500);
-                },
-
-                toggleFaq(index) {
-                    if (this.openFaqs.includes(index)) {
-                        this.openFaqs = this.openFaqs.filter(i => i !== index);
-                    } else {
-                        this.openFaqs.push(index);
-                    }
-                },
-
-                addLog(type, message) {
-                    const terminal = document.getElementById('terminal');
-                    this.logs += `<div class="log-${type}">[${type.charAt(0).toUpperCase() + type.slice(1)}] ${message}</div>`;
-
-                    // Ensure terminal scrolls to the latest message
-                    if (terminal) {
-                        setTimeout(() => {
-                            terminal.scrollTop = terminal.scrollHeight;
-                        }, 10);
-                    }
-                },
-
-                clearLogs() {
-                    this.logs = '<div class="log-system">[System] Logs cleared</div><div class="log-system">[System] NaturalTTS Engine ready</div>';
+                toggleFaq(i) {
+                    this.openFaqs.includes(i)
+                    ? (this.openFaqs = this.openFaqs.filter(k => k !== i))
+                    : this.openFaqs.push(i);
                 }
-            }
-        }
+            }));
+        });
     </script>
+    <script type="module" src="assets/js/app.js"></script>
 </body>
-
 </html>
