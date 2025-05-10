@@ -148,49 +148,89 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary-500 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            <span class="text-sm font-medium text-light-100">System Log</span>
+                            <span class="text-sm font-medium text-light-100">System Activity</span>
                         </div>
-                        <button class="text-xs text-light-400 hover:text-light-300 transition-colors">Clear</button>
+                        <button @click="clearLogs" class="text-xs text-light-400 hover:text-primary-500 transition-colors">
+                            Clear Log
+                        </button>
                     </div>
-                    <div class="terminal text-xs leading-5 h-32 overflow-y-auto">
-                        <!-- Log entries would appear here -->
+                    <div class="p-4 bg-[#222] text-sm font-mono overflow-hidden">
+                        <div id="terminal" class="terminal h-32 overflow-y-auto text-xs" x-html="logs"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Download Progress Indicator (shows only when installing) -->
+            <section x-show="installing !== null" class="mb-8 animate-fade-in">
+                <div class="border border-light-600 bg-light-900 rounded-md overflow-hidden shadow-sm">
+                    <div class="p-4 border-b border-light-600 bg-light-800 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary-500 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span class="text-sm font-medium text-light-100">Downloading Voice</span>
+                        </div>
+                        <span class="text-xs text-light-400 font-mono" x-text="`${progress}%`"></span>
+                    </div>
+                    <div class="p-4">
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm text-light-100 font-medium" x-text="installing"></span>
+                        </div>
+                        <div class="w-full bg-light-700 rounded-full h-2.5 mb-4">
+                            <div class="bg-primary-500 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                                :style="`width: ${progress}%`"></div>
+                        </div>
+                        <p class="text-xs text-light-400">The voice model will be stored in your browser storage and available offline after download.</p>
                     </div>
                 </div>
             </section>
 
             <!-- Installed Voices Section -->
             <section class="mb-8">
-                <h2 class="text-xl font-semibold text-light-100 mb-4">Installed</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-light-100">Installed Voices</h2>
+                    <span class="text-sm text-light-400 bg-light-800 px-2 py-1 rounded" x-text="`${installed.length} voices`"></span>
+                </div>
                 <div class="border border-light-600 bg-light-900 rounded-md overflow-hidden shadow-sm">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-light-800/50 border-b border-light-600">
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100">Voice Pack</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100">Language</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100">Status</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100 text-right">Size</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100"></th>
+                            <thead class="bg-light-800 border-b border-light-600">
+                                <tr>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Voice ID</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Language</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Speaker</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Quality</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider w-24">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <template x-for="v in installed" :key="v.id">
-                                  <tr class="border-b border-light-600">
-                                    <td class="px-4 py-3 text-sm" x-text="v.id"></td>
-                                    <td class="px-4 py-3 text-sm">—</td>
-                                    <td class="px-4 py-3 text-sm">(on disk)</td>
-                                    <td class="px-4 py-3 text-sm text-right font-mono">?</td>
-                                    <td class="px-4 py-3 text-sm text-right">
-                                      <button @click="remove(v.id)"
-                                        class="px-4 py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white text-sm rounded-md">
-                                        Delete
-                                      </button>
-                                    </td>
-                                  </tr>
+                            <tbody class="divide-y divide-light-600">
+                                <template x-for="voice in installed" :key="voice.id">
+                                    <tr class="hover:bg-light-800 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-mono text-light-100" x-text="voice.id"></td>
+                                        <td class="px-4 py-3 text-sm text-light-300" x-text="voice.language"></td>
+                                        <td class="px-4 py-3 text-sm text-light-300" x-text="voice.speaker"></td>
+                                        <td class="px-4 py-3 text-sm text-light-300" x-text="voice.quality"></td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button @click="remove(voice.id)"
+                                                class="text-xs font-medium text-error hover:text-red-400 transition-colors flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Remove
+                                            </button>
+                                        </td>
+                                    </tr>
                                 </template>
-                              </tbody>
+                                <tr x-show="installed.length === 0">
+                                    <td colspan="5" class="px-4 py-6 text-center text-light-400 italic">
+                                        No voices installed. Install some from the list below.
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -198,37 +238,45 @@
 
             <!-- Available Voices Section -->
             <section>
-                <h2 class="text-xl font-semibold text-light-100 mb-4">Available to Install</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-light-100">Available to Install</h2>
+                    <span class="text-sm text-light-400 bg-light-800 px-2 py-1 rounded" x-text="`${available.length} voices`"></span>
+                </div>
                 <div class="border border-light-600 bg-light-900 rounded-md overflow-hidden shadow-sm">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-light-800/50 border-b border-light-600">
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100">Voice Pack</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100">Language</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100">Popularity</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100 text-right">Size</th>
-                                    <th class="px-4 py-3 text-sm font-medium text-light-100"></th>
+                            <thead class="bg-light-800 border-b border-light-600">
+                                <tr>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Voice ID</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Language</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Speaker</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider">Quality</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-light-300 uppercase tracking-wider w-24">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <template x-for="(voice, index) in availableVoices" :key="index">
-                                    <tr class="border-b border-light-600 hover:bg-light-800/20">
-                                        <td class="px-4 py-3 text-sm">
-                                            <span x-text="voice.name"></span>
-                                            <a href="#" class="text-primary-500 hover:text-primary-600">sample</a>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm" x-text="voice.language"></td>
-                                        <td class="px-4 py-3 text-sm" x-text="voice.popularity || '-'"></td>
-                                        <td class="px-4 py-3 text-sm text-right font-mono" x-text="voice.size"></td>
-                                        <td class="px-4 py-3 text-sm text-right">
-                                            <button
-                                                class="px-4 py-1.5 bg-emerald-500/80 hover:bg-emerald-600/90 text-white text-sm font-medium rounded-md transition-colors duration-200">
+                            <tbody class="divide-y divide-light-600">
+                                <template x-for="voice in available" :key="voice.id">
+                                    <tr class="hover:bg-light-800 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-mono text-light-100" x-text="voice.id"></td>
+                                        <td class="px-4 py-3 text-sm text-light-300" x-text="voice.language"></td>
+                                        <td class="px-4 py-3 text-sm text-light-300" x-text="voice.speaker"></td>
+                                        <td class="px-4 py-3 text-sm text-light-300" x-text="voice.quality"></td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button @click="install(voice.id)" 
+                                                class="text-xs font-medium text-primary-500 hover:text-primary-400 transition-colors flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
                                                 Install
                                             </button>
                                         </td>
                                     </tr>
                                 </template>
+                                <tr x-show="available.length === 0">
+                                    <td colspan="5" class="px-4 py-6 text-center text-light-400 italic">
+                                        All available voices have been installed.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
