@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introducing NaturalTTS v2.3 - NaturalTTS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        light: {
+                            900: '#F9FAFB',
+                            800: '#F3F4F6',
+                            700: '#E5E7EB',
+                            600: '#D1D5DB',
+                            500: '#9CA3AF',
+                            400: '#6B7280',
+                            300: '#4B5563',
+                            200: '#374151',
+                            100: '#1F2937',
+                        },
+                        primary: {
+                            900: '#4c0d95',
+                            800: '#5b16a3',
+                            700: '#6a1fb1',
+                            600: '#7928ca',
+                            500: '#8a3ffc',
+                            400: '#9e5cff',
+                            300: '#b57bff',
+                            200: '#d0a9ff',
+                            100: '#ebd6ff',
+                        },
+                        success: '#10B981',
+                        warning: '#FBBF24',
+                        error: '#EF4444',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-light-200 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="border-b border-gray-700 py-3 bg-[#333] shadow-sm">
+        <div class="container mx-auto px-4 max-w-5xl flex justify-between items-center">
+            <a href="/" class="flex items-center space-x-2">
+                <span class="text-2xl">🔊</span>
+                <span class="text-xl font-semibold text-white font-mono tracking-tight">NaturalTTS</span>
+            </a>
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-1">
+                <a href="/" class="text-gray-300 hover:text-white px-3 py-1.5 text-sm transition-colors">Home</a>
+                <a href="/#features"
+                    class="text-gray-300 hover:text-white px-3 py-1.5 text-sm transition-colors">Features</a>
+                <a href="/#voices"
+                    class="text-gray-300 hover:text-white px-3 py-1.5 text-sm transition-colors">Voices</a>
+                <a href="/blog"
+                    class="text-white px-3 py-1.5 text-sm border-b-2 border-primary-500 transition-colors">Blog</a>
+                <a href="/#faq" class="text-gray-300 hover:text-white px-3 py-1.5 text-sm transition-colors">FAQ</a>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Menu (hidden by default) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-[#333] border-t border-gray-700 pt-2 pb-4">
+            <div class="container mx-auto px-4">
+                <nav class="flex flex-col space-y-2">
+                    <a href="/" class="text-gray-300 hover:text-white px-3 py-1.5 text-sm">Home</a>
+                    <a href="/#features" class="text-gray-300 hover:text-white px-3 py-1.5 text-sm">Features</a>
+                    <a href="/#voices" class="text-gray-300 hover:text-white px-3 py-1.5 text-sm">Voices</a>
+                    <a href="/blog" class="text-white px-3 py-1.5 text-sm">Blog</a>
+                    <a href="/#faq" class="text-gray-300 hover:text-white px-3 py-1.5 text-sm">FAQ</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1">
+        <!-- Blog Post Header -->
+        <section class="py-8 md:py-12 border-b border-light-700">
+            <div class="container mx-auto px-4 max-w-3xl">
+                <div class="mb-2">
+                    <a href="/blog" class="text-primary-500 text-sm hover:text-primary-600 inline-flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Blog
+                    </a>
+                </div>
+                <h1 class="text-2xl md:text-3xl lg:text-4xl font-semibold text-light-100 mb-3">Introducing NaturalTTS
+                    v2.3: Smoother Voices and New Languages</h1>
+                <div class="flex items-center text-light-400 text-sm mb-4">
+                    <span>May 10, 2025</span>
+                    <span class="mx-2">•</span>
+                    <span>5 min read</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blog Post Content -->
+        <section class="py-8 md:py-12">
+            <div class="container mx-auto px-4 max-w-3xl">
+                <div class="prose prose-slate max-w-none">
+                    <p class="text-light-300 text-lg leading-relaxed mb-6">
+                        Our latest update brings significant improvements to voice quality and adds support for three
+                        new languages. These enhancements are part of our ongoing commitment to providing the most
+                        natural-sounding text-to-speech experience directly in your browser.
+                    </p>
+
+                    <h2 class="text-xl font-semibold text-light-100 mt-8 mb-4">What's New in v2.3</h2>
+
+                    <p class="text-light-300 mb-5">
+                        The NaturalTTS v2.3 release focuses on refining voice quality and expanding language support.
+                        Here are the key improvements:
+                    </p>
+
+                    <ul class="list-disc pl-6 mb-6 text-light-300 space-y-2">
+                        <li>Enhanced prosody modeling for more natural intonation patterns</li>
+                        <li>Improved handling of punctuation and pauses</li>
+                        <li>Better pronunciation of loan words and foreign names</li>
+                        <li>Reduced latency for faster speech generation</li>
+                        <li>Support for three new languages: Dutch, Polish, and Swedish</li>
+                    </ul>
+
+                    <h2 class="text-xl font-semibold text-light-100 mt-8 mb-4">Technical Improvements</h2>
+
+                    <p class="text-light-300 mb-5">
+                        Behind the scenes, we've made several technical improvements to make NaturalTTS even better:
+                    </p>
+
+                    <div class="bg-light-800 rounded-md p-5 mb-6 border border-light-600">
+                        <h3 class="text-light-100 font-medium mb-3">Performance Optimizations</h3>
+                        <p class="text-light-400 mb-3">
+                            We've optimized the WebAssembly code to reduce the processing time by approximately 30%.
+                            This results in noticeably faster speech generation, especially for longer texts.
+                        </p>
+                        <div class="flex items-center text-light-400 text-sm">
+                            <span class="inline-block w-3 h-3 rounded-full bg-success mr-1.5"></span>
+                            <span>Processing time reduced from ~70ms to ~47ms per character</span>
+                        </div>
+                    </div>
+
+                    <p class="text-light-300 mb-6">
+                        The voice model architecture has been refined to better capture the nuances of natural speech.
+                        We've integrated an improved attention mechanism that helps the model focus on the right
+                        phonetic contexts, resulting in more human-like prosody and fewer pronunciation errors.
+                    </p>
+
+                    <div class="border border-light-600 bg-white rounded-md overflow-hidden mb-6 shadow-sm">
+                        <div class="p-4 border-b border-light-600 bg-light-800 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary-500 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                            <span class="text-sm font-medium text-light-100">Audio Sample: Before and After</span>
+                        </div>
+                        <div class="p-4">
+                            <div class="mb-3">
+                                <div class="text-sm font-medium text-light-200 mb-1">v2.2 (Previous version)</div>
+                                <audio controls class="w-full h-10"></audio>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-light-200 mb-1">v2.3 (New version)</div>
+                                <audio controls class="w-full h-10"></audio>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl font-semibold text-light-100 mt-8 mb-4">New Language Support</h2>
+
+                    <p class="text-light-300 mb-5">
+                        We're excited to announce the addition of three new languages to our voice library:
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div class="border border-light-600 bg-white p-4 rounded-md text-center">
+                            <div class="text-xl mb-2">🇳🇱</div>
+                            <div class="text-light-100 font-medium">Dutch</div>
+                            <div class="text-light-400 text-sm">2 voices available</div>
+                        </div>
+                        <div class="border border-light-600 bg-white p-4 rounded-md text-center">
+                            <div class="text-xl mb-2">🇵🇱</div>
+                            <div class="text-light-100 font-medium">Polish</div>
+                            <div class="text-light-400 text-sm">2 voices available</div>
+                        </div>
+                        <div class="border border-light-600 bg-white p-4 rounded-md text-center">
+                            <div class="text-xl mb-2">🇸🇪</div>
+                            <div class="text-light-100 font-medium">Swedish</div>
+                            <div class="text-light-400 text-sm">2 voices available</div>
+                        </div>
+                    </div>
+
+                    <p class="text-light-300 mb-8">
+                        Each new language comes with male and female voice options, trained on high-quality recordings
+                        from native speakers. The models have been fine-tuned to capture the specific phonetic
+                        characteristics of each language, ensuring authentic pronunciation and natural-sounding speech.
+                    </p>
+
+                    <h2 class="text-xl font-semibold text-light-100 mt-8 mb-4">Getting Started with v2.3</h2>
+
+                    <p class="text-light-300 mb-5">
+                        To start using the new version, simply refresh your browser or clear your cache if you're still
+                        seeing the previous version. The update is automatically applied, with no need to download or
+                        install anything.
+                    </p>
+
+                    <div class="bg-light-900 border border-light-600 rounded-md p-5 mb-8">
+                        <h3 class="text-light-100 font-medium mb-3">Using the New Languages</h3>
+                        <p class="text-light-400 mb-4">
+                            To use one of the new languages, select it from the language dropdown menu in the main
+                            interface. The voices will be automatically loaded when you select the language.
+                        </p>
+                        <div class="terminal mb-1">
+                            <div class="log-system">[System] Loading Dutch language model...</div>
+                            <div class="log-info">[Info] Dutch female voice initialized</div>
+                            <div class="log-success">[Success] Language model ready</div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl font-semibold text-light-100 mt-8 mb-4">What's Next?</h2>
+
+                    <p class="text-light-300 mb-5">
+                        We continue to work on enhancing NaturalTTS with more features and improvements. Here's what you
+                        can expect in upcoming releases:
+                    </p>
+
+                    <ul class="list-disc pl-6 mb-6 text-light-300 space-y-2">
+                        <li>Voice customization options for adjusting speech characteristics</li>
+                        <li>Support for SSML (Speech Synthesis Markup Language) for fine-grained control</li>
+                        <li>Additional language support including Arabic, Korean, and Portuguese</li>
+                        <li>More voice options for existing languages</li>
+                        <li>Enhanced handling of complex technical terminology</li>
+                    </ul>
+
+                    <p class="text-light-300 mb-8">
+                        We value your feedback and are continuously working to improve NaturalTTS based on user
+                        suggestions. If you have any comments or encounter any issues with the new release, please don't
+                        hesitate to reach out via our contact form.
+                    </p>
+
+                    <div class="border-t border-light-700 pt-6">
+                        <p class="text-light-300 italic">
+                            Thank you for using NaturalTTS. We're excited to continue this journey of making
+                            high-quality speech synthesis accessible to everyone.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Post Navigation - Simplified -->
+        <section class="py-6 border-t border-light-700">
+            <div class="container mx-auto px-4 max-w-3xl">
+                <div class="flex justify-center">
+                    <a href="/blog"
+                        class="inline-flex items-center px-5 py-2 rounded-md bg-light-800 text-light-100 hover:bg-light-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Blog
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 border-t border-gray-700 bg-[#333]">
+        <div class="container mx-auto px-4 max-w-3xl">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0 flex items-center">
+                    <span class="text-xl mr-1">🔊</span>
+                    <span class="text-white font-mono text-sm">NaturalTTS</span>
+                    <span class="text-gray-400 text-xs ml-2">v2.3.1</span>
+                </div>
+                <div class="flex flex-wrap justify-center text-center md:text-right">
+                    <a href="#" class="text-gray-400 hover:text-white text-xs mx-2 transition-colors">Contact</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-xs mx-2 transition-colors">Privacy</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-xs mx-2 transition-colors">Terms</a>
+                    <span class="text-gray-500 text-xs mx-2">© 2025</span>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-gray-400 text-xs">
+                <span>Powered by Piper Neural TTS Engine · </span>
+                <span>WebAssembly + Web Audio API · </span>
+                <span>No data leaves your device</span>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .terminal {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #333;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 16px;
+            color: #f0f0f0;
+            overflow-x: auto;
+        }
+
+        .log-system {
+            color: #b57bff;
+        }
+
+        .log-info {
+            color: #63b3ed;
+        }
+
+        .log-success {
+            color: #10B981;
+        }
+
+        .log-warning {
+            color: #FBBF24;
+        }
+
+        .log-error {
+            color: #EF4444;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile menu elements
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+
+            // Mobile menu toggle
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Close mobile menu when clicking a link
+            if (mobileMenuLinks.length > 0) {
+                mobileMenuLinks.forEach(link => {
+                    link.addEventListener('click', function () {
+                        mobileMenu.classList.add('hidden');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
